@@ -1,0 +1,39 @@
+parameters:
+    api_route: "/api"
+    api_anonymous_available_regex: "^%api_route%/(register|auth|docs*)$"
+    api_reset_password_routes: "^%api_route%/(initialize-reset-password|reset-password.*|change-password.*)$"
+    api_registration_route: "^%api_route%/register"
+    api_endpoints_regex: "^%api_route%/(?!register).*$"
+
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+    firewalls:
+        register:
+            pattern: "%api_registration_route%"
+            stateless: true
+            security: false
+        reset-password:
+            pattern: "%api_reset_password_routes%"
+            stateless: true
+            security: false
+        main:
+            pattern: "%api_route%|%api_anonymous_available_regex%|^/api/docs.json"
+            stateless: true
+            security: false
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+    access_control:
+        - { path: "%api_anonymous_available_regex%", roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: "%api_reset_password_routes%", roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: "%api_endpoints_regex%", roles: ROLE_USER }
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon
